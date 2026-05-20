@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useState, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Float, MeshDistortMaterial, MeshWobbleMaterial } from "@react-three/drei";
 import * as THREE from "three";
@@ -107,7 +107,33 @@ function Particles() {
   );
 }
 
+function SceneContent() {
+  return (
+    <>
+      <ambientLight intensity={0.3} />
+      <directionalLight position={[5, 5, 5]} intensity={0.8} color="#67e8f9" />
+      <pointLight position={[-5, -5, 5]} intensity={0.5} color="#a78bfa" />
+
+      <FloatingSphere position={[-4, 2, -2]} color="#06b6d4" speed={1.5} distort={0.4} />
+      <FloatingSphere position={[4, -1, -3]} color="#8b5cf6" speed={1} distort={0.3} />
+      <FloatingSphere position={[0, 3, -4]} color="#3b82f6" speed={0.8} distort={0.5} />
+      <WobbleTorus position={[5, 2, -5]} color="#06b6d4" />
+      <WobbleTorus position={[-3, -2, -4]} color="#a78bfa" />
+
+      <Particles />
+    </>
+  );
+}
+
 export function FloatingScene() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
     <div className="absolute inset-0 z-0">
       <Canvas
@@ -115,18 +141,9 @@ export function FloatingScene() {
         dpr={[1, 1.5]}
         gl={{ antialias: true, alpha: true }}
         style={{ background: "transparent" }}
+        fallback={null}
       >
-        <ambientLight intensity={0.3} />
-        <directionalLight position={[5, 5, 5]} intensity={0.8} color="#67e8f9" />
-        <pointLight position={[-5, -5, 5]} intensity={0.5} color="#a78bfa" />
-
-        <FloatingSphere position={[-4, 2, -2]} color="#06b6d4" speed={1.5} distort={0.4} />
-        <FloatingSphere position={[4, -1, -3]} color="#8b5cf6" speed={1} distort={0.3} />
-        <FloatingSphere position={[0, 3, -4]} color="#3b82f6" speed={0.8} distort={0.5} />
-        <WobbleTorus position={[5, 2, -5]} color="#06b6d4" />
-        <WobbleTorus position={[-3, -2, -4]} color="#a78bfa" />
-
-        <Particles />
+        <SceneContent />
       </Canvas>
     </div>
   );
