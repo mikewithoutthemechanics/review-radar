@@ -47,39 +47,39 @@ export function ReviewCard({ review, onRespond, onEscalate }: ReviewCardProps) {
   }
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-5 backdrop-blur-sm transition-all hover:border-white/[0.1] hover:bg-white/[0.05]">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-            <User size={18} className="text-gray-500" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.06]">
+            <User size={18} className="text-white/40" />
           </div>
           <div>
-            <p className="font-medium text-gray-900">{review.author_name}</p>
+            <p className="font-medium text-white">{review.author_name}</p>
             <div className="mt-0.5 flex items-center gap-2">
               <StarRating rating={review.rating} size={14} />
               <Badge variant={review.source}>{review.source}</Badge>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-sm text-gray-500">
+        <div className="flex items-center gap-2 text-sm text-white/40">
           <Clock size={14} />
           {formatDistanceToNow(new Date(review.source_created_at), { addSuffix: true })}
         </div>
       </div>
 
-      <p className="mt-3 text-sm leading-relaxed text-gray-700">{review.text}</p>
+      <p className="mt-3 text-sm leading-relaxed text-white/60">{review.text}</p>
 
       <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Badge variant={review.sentiment}>{review.sentiment}</Badge>
           {review.responded && (
-            <span className="flex items-center gap-1 text-xs text-emerald-600">
+            <span className="flex items-center gap-1 text-xs text-emerald-400">
               <MessageSquare size={12} />
               Responded
             </span>
           )}
           {review.escalated && (
-            <span className="flex items-center gap-1 text-xs text-red-600">
+            <span className="flex items-center gap-1 text-xs text-red-400">
               <AlertTriangle size={12} />
               Escalated
             </span>
@@ -90,7 +90,7 @@ export function ReviewCard({ review, onRespond, onEscalate }: ReviewCardProps) {
           {!review.responded && (
             <button
               onClick={() => setShowResponse(!showResponse)}
-              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] px-3 py-1.5 text-xs font-medium text-white/60 transition-colors hover:bg-white/[0.06] hover:text-white"
             >
               <MessageSquare size={14} />
               Respond
@@ -99,7 +99,7 @@ export function ReviewCard({ review, onRespond, onEscalate }: ReviewCardProps) {
           {!review.escalated && review.rating <= 2 && (
             <button
               onClick={() => onEscalate?.(review.id)}
-              className="flex items-center gap-1.5 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-50"
+              className="flex items-center gap-1.5 rounded-lg border border-red-500/20 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/10"
             >
               <AlertTriangle size={14} />
               Escalate
@@ -109,13 +109,13 @@ export function ReviewCard({ review, onRespond, onEscalate }: ReviewCardProps) {
       </div>
 
       {showResponse && (
-        <div className="mt-4 space-y-3 rounded-lg border border-gray-100 bg-gray-50 p-4">
+        <div className="mt-4 space-y-3 rounded-lg border border-white/[0.06] bg-white/[0.02] p-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-gray-700">Draft Response</p>
+            <p className="text-sm font-medium text-white/70">Draft Response</p>
             <button
               onClick={handleGenerate}
               disabled={generating}
-              className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-3 py-1.5 text-xs font-medium text-white transition-all hover:opacity-90 disabled:opacity-50"
             >
               <Sparkles size={14} />
               {generating ? "Generating..." : "AI Generate"}
@@ -125,7 +125,7 @@ export function ReviewCard({ review, onRespond, onEscalate }: ReviewCardProps) {
             value={response}
             onChange={(e) => setResponse(e.target.value)}
             rows={4}
-            className="w-full rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-700 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-white/[0.08] bg-white/[0.04] p-3 text-sm text-white placeholder:text-white/25 focus:border-cyan-500/40 focus:outline-none focus:ring-1 focus:ring-cyan-500/30"
             placeholder="Write your response or use AI to generate one..."
           />
           <div className="flex justify-end">
@@ -136,7 +136,7 @@ export function ReviewCard({ review, onRespond, onEscalate }: ReviewCardProps) {
                 setResponse("");
               }}
               disabled={!response.trim()}
-              className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-emerald-600 disabled:opacity-50"
             >
               <Send size={14} />
               Send Response
