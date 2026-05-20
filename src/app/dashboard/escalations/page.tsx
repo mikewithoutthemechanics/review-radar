@@ -58,17 +58,17 @@ export default function EscalationsPage() {
 
     return (
       <div
-        className={`rounded-xl border bg-white p-5 shadow-sm transition-shadow hover:shadow-md ${
-          isSelected ? "border-blue-300 ring-2 ring-blue-100" : "border-gray-200"
+        className={`rounded-xl border p-5 backdrop-blur-sm transition-all ${
+          isSelected ? "border-cyan-500/30 ring-2 ring-cyan-500/10 bg-white/[0.05]" : "border-white/[0.06] bg-white/[0.03] hover:border-white/[0.1] hover:bg-white/[0.05]"
         }`}
       >
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-              <AlertTriangle size={18} className="text-red-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10">
+              <AlertTriangle size={18} className="text-red-400" />
             </div>
             <div>
-              <p className="font-medium text-gray-900">
+              <p className="font-medium text-white">
                 {review?.author_name ?? "Unknown"}
               </p>
               {review && <StarRating rating={review.rating} size={14} />}
@@ -78,10 +78,10 @@ export default function EscalationsPage() {
         </div>
 
         {review && (
-          <p className="mt-3 text-sm leading-relaxed text-gray-700">{review.text}</p>
+          <p className="mt-3 text-sm leading-relaxed text-white/60">{review.text}</p>
         )}
 
-        <div className="mt-3 flex items-center gap-4 text-xs text-gray-500">
+        <div className="mt-3 flex items-center gap-4 text-xs text-white/40">
           <span className="flex items-center gap-1">
             <Clock size={12} />
             {formatDistanceToNow(new Date(escalation.created_at), { addSuffix: true })}
@@ -95,16 +95,16 @@ export default function EscalationsPage() {
         </div>
 
         {escalation.notes && (
-          <div className="mt-3 rounded-lg bg-yellow-50 p-3 text-xs text-yellow-800">
+          <div className="mt-3 rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 text-xs text-amber-300">
             <p className="font-medium">Notes:</p>
-            <p className="mt-1 whitespace-pre-wrap">{escalation.notes}</p>
+            <p className="mt-1 whitespace-pre-wrap text-amber-200/80">{escalation.notes}</p>
           </div>
         )}
 
         <div className="mt-4 flex items-center gap-2">
           <button
             onClick={() => setSelectedId(isSelected ? null : escalation.id)}
-            className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/60 hover:bg-white/[0.05]"
           >
             <MessageSquare size={14} />
             {isSelected ? "Close" : "Add Note"}
@@ -112,7 +112,7 @@ export default function EscalationsPage() {
           {escalation.status !== "resolved" && (
             <button
               onClick={() => updateStatus(escalation.id, "in_progress")}
-              className="flex items-center gap-1.5 rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-50"
+              className="flex items-center gap-1.5 rounded-lg border border-cyan-500/20 px-3 py-1.5 text-xs font-medium text-cyan-400 hover:bg-cyan-500/10"
             >
               <User size={14} />
               Assign
@@ -121,7 +121,7 @@ export default function EscalationsPage() {
           {escalation.status !== "resolved" && (
             <button
               onClick={() => updateStatus(escalation.id, "resolved")}
-              className="flex items-center gap-1.5 rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50"
+              className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 px-3 py-1.5 text-xs font-medium text-emerald-400 hover:bg-emerald-500/10"
             >
               <CheckCircle2 size={14} />
               Resolve
@@ -130,7 +130,7 @@ export default function EscalationsPage() {
           {escalation.status !== "dismissed" && escalation.status !== "resolved" && (
             <button
               onClick={() => updateStatus(escalation.id, "dismissed")}
-              className="flex items-center gap-1.5 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-50"
+              className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-white/40 hover:bg-white/[0.05]"
             >
               <XCircle size={14} />
               Dismiss
@@ -145,14 +145,14 @@ export default function EscalationsPage() {
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Add a note..."
-              className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              className="flex-1 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-500/50 focus:outline-none"
               onKeyDown={(e) => {
                 if (e.key === "Enter") addNote(escalation.id);
               }}
             />
             <button
               onClick={() => addNote(escalation.id)}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2 text-sm font-medium text-white hover:opacity-90"
             >
               Save
             </button>
@@ -165,15 +165,15 @@ export default function EscalationsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Escalations</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-white">Escalations</h1>
+        <p className="mt-1 text-sm text-white/40">
           Negative reviews flagged for human attention
         </p>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div>
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-yellow-700">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-yellow-400">
             <AlertTriangle size={16} />
             Pending ({pending.length})
           </h2>
@@ -182,13 +182,13 @@ export default function EscalationsPage() {
               <EscalationCard key={e.id} escalation={e} />
             ))}
             {pending.length === 0 && (
-              <p className="text-sm text-gray-400">No pending escalations</p>
+              <p className="text-sm text-white/30">No pending escalations</p>
             )}
           </div>
         </div>
 
         <div>
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-blue-700">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-cyan-400">
             <User size={16} />
             In Progress ({inProgress.length})
           </h2>
@@ -197,13 +197,13 @@ export default function EscalationsPage() {
               <EscalationCard key={e.id} escalation={e} />
             ))}
             {inProgress.length === 0 && (
-              <p className="text-sm text-gray-400">No escalations in progress</p>
+              <p className="text-sm text-white/30">No escalations in progress</p>
             )}
           </div>
         </div>
 
         <div>
-          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-emerald-700">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-emerald-400">
             <CheckCircle2 size={16} />
             Resolved ({resolved.length})
           </h2>
@@ -212,7 +212,7 @@ export default function EscalationsPage() {
               <EscalationCard key={e.id} escalation={e} />
             ))}
             {resolved.length === 0 && (
-              <p className="text-sm text-gray-400">No resolved escalations</p>
+              <p className="text-sm text-white/30">No resolved escalations</p>
             )}
           </div>
         </div>

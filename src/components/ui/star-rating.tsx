@@ -12,7 +12,7 @@ export function StarRating({ rating, size = 16 }: { rating: number; size?: numbe
           className={
             star <= rating
               ? "fill-yellow-400 text-yellow-400"
-              : "fill-gray-200 text-gray-200"
+              : "fill-white/10 text-white/10"
           }
         />
       ))}
