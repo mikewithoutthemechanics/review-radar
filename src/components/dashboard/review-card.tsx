@@ -32,6 +32,8 @@ export function ReviewCard({ review, onRespond, onEscalate }: ReviewCardProps) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          reviewId: review.id,
+          businessId: review.business_id,
           reviewText: review.text,
           rating: review.rating,
           authorName: review.author_name,

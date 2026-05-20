@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useBusiness } from "@/components/dashboard/business-provider";
+import { getEscalations, updateEscalationStatus, addEscalationNote } from "@/lib/db";
 import { DEMO_ESCALATIONS } from "@/lib/demo-data";
 import { Escalation, EscalationStatus } from "@/types";
 import { StarRating } from "@/components/ui/star-rating";
@@ -12,15 +14,30 @@ import {
   MessageSquare,
   CheckCircle2,
   XCircle,
+  Loader2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export default function EscalationsPage() {
+  const { business, loading: bizLoading } = useBusiness();
   const [escalations, setEscalations] = useState<Escalation[]>(DEMO_ESCALATIONS);
+  const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
 
-  function updateStatus(id: string, status: EscalationStatus) {
+  useEffect(() => {
+    async function load() {
+      if (business) {
+        const data = await getEscalations(business.id);
+        setEscalations(data);
+      }
+      setLoading(false);
+    }
+    if (!bizLoading) load();
+  }, [business, bizLoading]);
+
+  async function updateStatus(id: string, status: EscalationStatus) {
+    await updateEscalationStatus(id, status);
     setEscalations((prev) =>
       prev.map((e) =>
         e.id === id
@@ -34,8 +51,10 @@ export default function EscalationsPage() {
     );
   }
 
-  function addNote(id: string) {
+  async function handleAddNote(id: string) {
     if (!notes.trim()) return;
+    const esc = escalations.find((e) => e.id === id);
+    await addEscalationNote(id, esc?.notes ?? null, notes);
     setEscalations((prev) =>
       prev.map((e) =>
         e.id === id
@@ -51,6 +70,14 @@ export default function EscalationsPage() {
   const resolved = escalations.filter(
     (e) => e.status === "resolved" || e.status === "dismissed"
   );
+
+  if (loading || bizLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+      </div>
+    );
+  }
 
   function EscalationCard({ escalation }: { escalation: Escalation }) {
     const review = escalation.review;
@@ -101,7 +128,7 @@ export default function EscalationsPage() {
           </div>
         )}
 
-        <div className="mt-4 flex items-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <button
             onClick={() => setSelectedId(isSelected ? null : escalation.id)}
             className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] px-3 py-1.5 text-xs font-medium text-white/60 hover:bg-white/[0.05]"
@@ -147,11 +174,11 @@ export default function EscalationsPage() {
               placeholder="Add a note..."
               className="flex-1 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-500/50 focus:outline-none"
               onKeyDown={(e) => {
-                if (e.key === "Enter") addNote(escalation.id);
+                if (e.key === "Enter") handleAddNote(escalation.id);
               }}
             />
             <button
-              onClick={() => addNote(escalation.id)}
+              onClick={() => handleAddNote(escalation.id)}
               className="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2 text-sm font-medium text-white hover:opacity-90"
             >
               Save

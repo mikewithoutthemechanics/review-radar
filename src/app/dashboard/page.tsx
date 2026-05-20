@@ -1,19 +1,45 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { useBusiness } from "@/components/dashboard/business-provider";
+import { getDashboardMetrics } from "@/lib/db";
 import { DEMO_METRICS } from "@/lib/demo-data";
 import { MetricCard } from "@/components/ui/metric-card";
 import { ReviewCard } from "@/components/dashboard/review-card";
 import { RatingChart, SentimentPie } from "@/components/dashboard/sentiment-chart";
+import type { DashboardMetrics } from "@/types";
 import {
   MessageSquare,
   Star,
   BarChart3,
   AlertTriangle,
   TrendingUp,
+  Loader2,
 } from "lucide-react";
 
 export default function DashboardPage() {
-  const metrics = DEMO_METRICS;
+  const { business, loading: bizLoading } = useBusiness();
+  const [metrics, setMetrics] = useState<DashboardMetrics>(DEMO_METRICS);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      if (business) {
+        const data = await getDashboardMetrics(business.id);
+        setMetrics(data);
+      }
+      setLoading(false);
+    }
+    if (!bizLoading) load();
+  }, [business, bizLoading]);
+
+  if (loading || bizLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+      </div>
+    );
+  }
 
   return (
     <div>

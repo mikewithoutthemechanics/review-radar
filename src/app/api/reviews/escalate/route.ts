@@ -1,21 +1,54 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServiceClient } from "@/lib/supabase";
+import { isSupabaseConfigured } from "@/lib/supabase";
+import { escalateSchema } from "@/lib/validations";
 
 export async function POST(req: NextRequest) {
   try {
-    const { reviewId, businessId } = await req.json();
+    const body = await req.json();
+    const parsed = escalateSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid request", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
 
-    // In production, this would create an escalation record in Supabase
-    // and send notification emails via Resend
-    const escalation = {
-      id: `esc-${Date.now()}`,
-      review_id: reviewId,
-      business_id: businessId,
-      status: "pending",
-      assigned_to: null,
-      notes: null,
-      created_at: new Date().toISOString(),
-      resolved_at: null,
-    };
+    const { reviewId, businessId } = parsed.data;
+
+    if (!isSupabaseConfigured()) {
+      return NextResponse.json({
+        escalation: {
+          id: `esc-${Date.now()}`,
+          review_id: reviewId,
+          business_id: businessId,
+          status: "pending",
+          assigned_to: null,
+          notes: null,
+          created_at: new Date().toISOString(),
+          resolved_at: null,
+        },
+      });
+    }
+
+    const supabase = getServiceClient();
+
+    const { data: escalation, error } = await supabase
+      .from("escalations")
+      .insert({
+        review_id: reviewId,
+        business_id: businessId,
+        status: "pending",
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    await supabase
+      .from("reviews")
+      .update({ escalated: true })
+      .eq("id", reviewId);
 
     return NextResponse.json({ escalation });
   } catch (error) {
