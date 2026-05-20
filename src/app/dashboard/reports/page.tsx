@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useBusiness } from "@/components/dashboard/business-provider";
+import { getReports } from "@/lib/db";
 import { DEMO_REPORT } from "@/lib/demo-data";
 import { StarRating } from "@/components/ui/star-rating";
 import { SentimentPie } from "@/components/dashboard/sentiment-chart";
+import type { ReputationReport } from "@/types";
 import {
   BarChart3,
   Download,
@@ -18,28 +21,51 @@ import {
 import { format } from "date-fns";
 
 export default function ReportsPage() {
-  const [report] = useState(DEMO_REPORT);
+  const { business, loading: bizLoading } = useBusiness();
+  const [report, setReport] = useState<ReputationReport>(DEMO_REPORT);
+  const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
 
+  useEffect(() => {
+    async function load() {
+      if (business) {
+        const reports = await getReports(business.id);
+        if (reports.length > 0) setReport(reports[0]);
+      }
+      setLoading(false);
+    }
+    if (!bizLoading) load();
+  }, [business, bizLoading]);
+
   async function handleGenerateReport() {
+    if (!business) return;
     setGenerating(true);
     try {
       const res = await fetch("/api/reports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessId: "biz-1" }),
+        body: JSON.stringify({ businessId: business.id }),
       });
-      await res.json();
+      const data = await res.json();
+      if (data.report) setReport(data.report);
     } catch {
-      // Use demo data as fallback
+      // Use existing report as fallback
     } finally {
       setGenerating(false);
     }
   }
 
+  if (loading || bizLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+      </div>
+    );
+  }
+
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Reputation Reports</h1>
           <p className="mt-1 text-sm text-white/40">

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useBusiness } from "@/components/dashboard/business-provider";
+import { updateBusiness } from "@/lib/db";
 import {
   Building2,
   Mic,
@@ -9,27 +11,61 @@ import {
   Save,
   CheckCircle2,
   ExternalLink,
+  Loader2,
 } from "lucide-react";
 import { SUBSCRIPTION_PLANS } from "@/lib/payfast";
 
 export default function SettingsPage() {
+  const { business, loading: bizLoading, reload } = useBusiness();
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState({
-    businessName: "Smile Dental Sandton",
-    industry: "dental",
+    businessName: "",
+    industry: "general",
     googlePlaceId: "",
     facebookPageId: "",
     brandVoice:
-      "Professional yet warm. We care deeply about our patients and want them to feel valued. Use South African English. Be empathetic with complaints and offer to resolve issues personally.",
+      "Professional yet warm. We care deeply about our customers and want them to feel valued. Use South African English.",
     autoRespond: true,
     escalationThreshold: 2,
     emailNotifications: true,
     escalationAlerts: true,
     weeklyDigest: true,
-    currentPlan: "pro" as const,
+    currentPlan: "free" as string,
   });
 
-  function handleSave() {
+  useEffect(() => {
+    if (business) {
+      setSettings({
+        businessName: business.name,
+        industry: business.industry,
+        googlePlaceId: business.google_place_id ?? "",
+        facebookPageId: business.facebook_page_id ?? "",
+        brandVoice: business.brand_voice,
+        autoRespond: business.auto_respond,
+        escalationThreshold: business.escalation_threshold,
+        emailNotifications: true,
+        escalationAlerts: true,
+        weeklyDigest: true,
+        currentPlan: business.subscription_tier,
+      });
+    }
+  }, [business]);
+
+  async function handleSave() {
+    if (!business) return;
+    setSaving(true);
+    await updateBusiness(business.id, {
+      name: settings.businessName,
+      industry: settings.industry,
+      google_place_id: settings.googlePlaceId || null,
+      facebook_page_id: settings.facebookPageId || null,
+      brand_voice: settings.brandVoice,
+      auto_respond: settings.autoRespond,
+      escalation_threshold: settings.escalationThreshold,
+    });
+    await reload();
+    setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -41,9 +77,17 @@ export default function SettingsPage() {
     setSettings((prev) => ({ ...prev, [key]: value }));
   }
 
+  if (bizLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+      </div>
+    );
+  }
+
   return (
     <div>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Settings</h1>
           <p className="mt-1 text-sm text-white/40">
@@ -52,10 +96,11 @@ export default function SettingsPage() {
         </div>
         <button
           onClick={handleSave}
-          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90"
+          disabled={saving}
+          className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-500 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:opacity-50"
         >
-          {saved ? <CheckCircle2 size={16} /> : <Save size={16} />}
-          {saved ? "Saved!" : "Save Changes"}
+          {saved ? <CheckCircle2 size={16} /> : saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {saved ? "Saved!" : saving ? "Saving..." : "Save Changes"}
         </button>
       </div>
 
@@ -83,15 +128,19 @@ export default function SettingsPage() {
               <select
                 value={settings.industry}
                 onChange={(e) => updateSetting("industry", e.target.value)}
-                className="mt-1 w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-sm text-white focus:border-cyan-500/50 focus:outline-none"
+                className="mt-1 w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-sm text-white focus:border-cyan-500/50 focus:outline-none [&>option]:bg-[#0c0c14]"
               >
-                <option value="dental" className="bg-[#0c0c14]">Dental Practice</option>
-                <option value="medical" className="bg-[#0c0c14]">Medical Practice</option>
-                <option value="restaurant" className="bg-[#0c0c14]">Restaurant / Café</option>
-                <option value="salon" className="bg-[#0c0c14]">Salon / Spa</option>
-                <option value="automotive" className="bg-[#0c0c14]">Automotive / Mechanic</option>
-                <option value="retail" className="bg-[#0c0c14]">Retail Store</option>
-                <option value="hospitality" className="bg-[#0c0c14]">Hospitality / B&B</option>
+                <option value="general">General Business</option>
+                <option value="dental">Dental Practice</option>
+                <option value="medical">Medical Practice</option>
+                <option value="restaurant">Restaurant / Café</option>
+                <option value="salon">Salon / Spa</option>
+                <option value="automotive">Automotive / Mechanic</option>
+                <option value="retail">Retail Store</option>
+                <option value="hospitality">Hospitality / B&B</option>
+                <option value="fitness">Gym / Fitness</option>
+                <option value="legal">Legal Services</option>
+                <option value="accounting">Accounting / Financial</option>
               </select>
             </div>
             <div>
@@ -137,7 +186,7 @@ export default function SettingsPage() {
             rows={4}
             className="mt-4 w-full rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 text-sm text-white focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/30"
           />
-          <div className="mt-4 flex items-center gap-6">
+          <div className="mt-4 flex flex-wrap items-center gap-6">
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -154,11 +203,11 @@ export default function SettingsPage() {
                 onChange={(e) =>
                   updateSetting("escalationThreshold", Number(e.target.value))
                 }
-                className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1 text-sm text-white focus:border-cyan-500/50 focus:outline-none"
+                className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-2 py-1 text-sm text-white focus:border-cyan-500/50 focus:outline-none [&>option]:bg-[#0c0c14]"
               >
-                <option value={1} className="bg-[#0c0c14]">1 star</option>
-                <option value={2} className="bg-[#0c0c14]">2 stars or below</option>
-                <option value={3} className="bg-[#0c0c14]">3 stars or below</option>
+                <option value={1}>1 star</option>
+                <option value={2}>2 stars or below</option>
+                <option value={3}>3 stars or below</option>
               </select>
               <span className="text-sm text-white/60">and below</span>
             </div>

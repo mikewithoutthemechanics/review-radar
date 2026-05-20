@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Radar, Mail, Lock, Building2, Loader2, User } from "lucide-react";
+import { createBrowserSupabaseClient } from "@/lib/supabase";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -36,10 +37,48 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
 
-    // Demo mode: redirect to dashboard
-    setTimeout(() => {
+    try {
+      const supabase = createBrowserSupabaseClient();
+
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.name,
+            business_name: formData.businessName,
+          },
+        },
+      });
+
+      if (authError) {
+        setError(authError.message);
+        setLoading(false);
+        return;
+      }
+
+      // Create business record
+      if (authData.user) {
+        const slug = formData.businessName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "");
+
+        await supabase.from("businesses").insert({
+          user_id: authData.user.id,
+          name: formData.businessName,
+          slug,
+          industry: formData.industry,
+        });
+      }
+
       router.push("/dashboard");
-    }, 800);
+      router.refresh();
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
   }
 
   function updateField(field: string, value: string) {
