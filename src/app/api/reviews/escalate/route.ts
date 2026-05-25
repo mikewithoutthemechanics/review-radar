@@ -2,9 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient } from "@/lib/supabase";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { escalateSchema } from "@/lib/validations";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/api-auth";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(req: NextRequest) {
   try {
+    const { user } = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse("Authentication required");
+    }
+
     const body = await req.json();
     const parsed = escalateSchema.safeParse(body);
     if (!parsed.success) {
@@ -49,6 +56,15 @@ export async function POST(req: NextRequest) {
       .from("reviews")
       .update({ escalated: true })
       .eq("id", reviewId);
+
+    await logAudit(
+      "create_escalation",
+      "escalation",
+      { reviewId, escalationId: escalation.id },
+      businessId,
+      user.id,
+      req
+    );
 
     return NextResponse.json({ escalation });
   } catch (error) {

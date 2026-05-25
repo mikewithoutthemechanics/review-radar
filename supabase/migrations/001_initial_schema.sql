@@ -75,6 +75,30 @@ CREATE TABLE IF NOT EXISTS reputation_reports (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Audit logs table
+CREATE TABLE IF NOT EXISTS audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id UUID REFERENCES businesses(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  action TEXT NOT NULL,
+  resource_type TEXT NOT NULL,
+  resource_id TEXT,
+  details JSONB,
+  ip_address INET,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX idx_audit_logs_business_id ON audit_logs(business_id);
+CREATE INDEX idx_audit_logs_user_id ON audit_logs(user_id);
+CREATE INDEX idx_audit_logs_action ON audit_logs(action);
+CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at DESC);
+
+ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view audit logs for own businesses" ON audit_logs
+  FOR SELECT USING (business_id IN (SELECT id FROM businesses WHERE user_id = auth.uid()));
+
 -- Indexes
 CREATE INDEX idx_reviews_business_id ON reviews(business_id);
 CREATE INDEX idx_reviews_source ON reviews(source);

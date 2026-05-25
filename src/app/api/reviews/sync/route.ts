@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceClient, isSupabaseConfigured } from "@/lib/supabase";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/api-auth";
+import { logAudit } from "@/lib/audit";
 
 function classifySentiment(rating: number, text: string): "positive" | "neutral" | "negative" {
   if (rating <= 2) return "negative";
@@ -14,6 +16,11 @@ function classifySentiment(rating: number, text: string): "positive" | "neutral"
 
 export async function POST(req: NextRequest) {
   try {
+    const { user } = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse("Authentication required");
+    }
+
     const { businessId } = await req.json();
 
     if (!isSupabaseConfigured()) {
@@ -70,6 +77,15 @@ export async function POST(req: NextRequest) {
 
       if (!error) synced++;
     }
+
+    await logAudit(
+      "sync_reviews",
+      "review",
+      { source: "google", synced, total: reviews.length },
+      businessId,
+      user.id,
+      req
+    );
 
     return NextResponse.json({
       synced,

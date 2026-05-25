@@ -3,11 +3,18 @@ import { generateReviewResponse } from "@/lib/groq";
 import { getServiceClient, isSupabaseConfigured } from "@/lib/supabase";
 import { respondSchema } from "@/lib/validations";
 import { rateLimit } from "@/lib/rate-limit";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/api-auth";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(req: NextRequest) {
   try {
+    const { user } = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse("Authentication required");
+    }
+
     const ip = req.headers.get("x-forwarded-for") || "unknown";
-    const { allowed } = rateLimit(`respond:${ip}`, 10, 60000);
+    const { allowed } = await rateLimit(`respond:${ip}`, 10, 60000);
     if (!allowed) {
       return NextResponse.json(
         { error: "Too many requests. Please try again in a minute." },
@@ -35,19 +42,28 @@ export async function POST(req: NextRequest) {
     );
 
     if (isSupabaseConfigured() && reviewId && businessId) {
-      const supabase = getServiceClient();
+      const serviceSupabase = getServiceClient();
 
-      await supabase.from("review_responses").insert({
+      await serviceSupabase.from("review_responses").insert({
         review_id: reviewId,
         business_id: businessId,
         response_text: response,
         ai_generated: true,
       });
 
-      await supabase
+      await serviceSupabase
         .from("reviews")
         .update({ responded: true })
         .eq("id", reviewId);
+
+      await logAudit(
+        "generate_response",
+        "review_response",
+        { reviewId, responseLength: response.length },
+        businessId,
+        user.id,
+        req
+      );
     }
 
     return NextResponse.json({ response });

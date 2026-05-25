@@ -8,7 +8,8 @@ export async function middleware(request: NextRequest) {
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    // No Supabase configured — allow through for demo mode
+    supabaseResponse = NextResponse.next({ request });
+    addSecurityHeaders(supabaseResponse);
     return supabaseResponse;
   }
 
@@ -33,15 +34,15 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protected routes — redirect to login if not authenticated
   if (request.nextUrl.pathname.startsWith("/dashboard") && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirect", request.nextUrl.pathname);
-    return NextResponse.redirect(url);
+    const response = NextResponse.redirect(url);
+    addSecurityHeaders(response);
+    return response;
   }
 
-  // Redirect authenticated users away from auth pages
   if (
     (request.nextUrl.pathname === "/login" ||
       request.nextUrl.pathname === "/signup") &&
@@ -49,12 +50,52 @@ export async function middleware(request: NextRequest) {
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    const response = NextResponse.redirect(url);
+    addSecurityHeaders(response);
+    return response;
+  }
+
+  addSecurityHeaders(supabaseResponse);
+
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    const method = request.method.toUpperCase();
+    if (["POST", "PUT", "DELETE", "PATCH"].includes(method)) {
+      const csrfCookie = request.cookies.get("csrf-token")?.value;
+      const csrfHeader = request.headers.get("x-csrf-token");
+
+      if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
+        return NextResponse.json(
+          { error: "CSRF token validation failed" },
+          { status: 403 }
+        );
+      }
+    }
   }
 
   return supabaseResponse;
 }
 
+function addSecurityHeaders(response: NextResponse) {
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https:",
+    "font-src 'self' data:",
+    "connect-src 'self' https://api.groq.com https://*.supabase.co",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+
+  response.headers.set("Content-Security-Policy", csp);
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+}
+
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/signup"],
+  matcher: ["/dashboard/:path*", "/login", "/signup", "/api/:path*"],
 };

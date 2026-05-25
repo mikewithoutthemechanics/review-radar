@@ -3,9 +3,16 @@ import { generateReportInsights } from "@/lib/groq";
 import { getServiceClient, isSupabaseConfigured } from "@/lib/supabase";
 import { DEMO_METRICS, DEMO_REPORT } from "@/lib/demo-data";
 import { reportSchema } from "@/lib/validations";
+import { getAuthenticatedUser, unauthorizedResponse } from "@/lib/api-auth";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(req: NextRequest) {
   try {
+    const { user } = await getAuthenticatedUser(req);
+    if (!user) {
+      return unauthorizedResponse("Authentication required");
+    }
+
     const body = await req.json();
     const parsed = reportSchema.safeParse(body);
     if (!parsed.success) {
@@ -96,6 +103,15 @@ export async function POST(req: NextRequest) {
       const supabase = getServiceClient();
       await supabase.from("reputation_reports").insert(report);
     }
+
+    await logAudit(
+      "generate_report",
+      "reputation_report",
+      { reportId: report.id },
+      businessId,
+      user.id,
+      req
+    );
 
     return NextResponse.json({ report });
   } catch (error) {

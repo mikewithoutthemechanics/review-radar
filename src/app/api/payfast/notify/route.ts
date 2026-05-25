@@ -33,7 +33,15 @@ export async function POST(req: NextRequest) {
     });
 
     const passphrase = process.env.PAYFAST_PASSPHRASE;
-    if (passphrase && !validatePayFastSignature(data, passphrase)) {
+    let validSignature = false;
+    
+    if (passphrase && passphrase !== "") {
+      validSignature = validatePayFastSignature(data, passphrase);
+    } else {
+      validSignature = validatePayFastSignature(data);
+    }
+    
+    if (!validSignature) {
       console.error("PayFast ITN: Invalid signature");
       return new NextResponse("Invalid signature", { status: 403 });
     }

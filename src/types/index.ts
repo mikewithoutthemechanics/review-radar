@@ -3,6 +3,19 @@ export type ReviewSentiment = "positive" | "neutral" | "negative";
 export type EscalationStatus = "pending" | "in_progress" | "resolved" | "dismissed";
 export type SubscriptionTier = "free" | "starter" | "pro" | "enterprise";
 
+export interface AuditLog {
+  id: string;
+  business_id: string | null;
+  user_id: string | null;
+  action: string;
+  resource_type: string;
+  resource_id: string | null;
+  details: Record<string, unknown>;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
 export interface Business {
   id: string;
   user_id: string;

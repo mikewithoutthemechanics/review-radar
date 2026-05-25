@@ -1,0 +1,16 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "env": {
+    "NEXT_PUBLIC_SUPABASE_URL": "@next_public_supabase_url",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "@next_public_supabase_anon_key",
+    "SUPABASE_SERVICE_ROLE_KEY": "@supabase_service_role_key",
+    "GROQ_API_KEY": "@groq_api_key",
+    "PAYFAST_MERCHANT_ID": "@payfast_merchant_id",
+    "PAYFAST_MERCHANT_KEY": "@payfast_merchant_key",
+    "PAYFAST_PASSPHRASE": "@payfast_passphrase",
+    "UPSTASH_REDIS_REST_URL": "@upstash_redis_rest_url",
+    "UPSTASH_REDIS_REST_TOKEN": "@upstash_redis_rest_token"
+  }
+}
