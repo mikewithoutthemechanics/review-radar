@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Radar, Mail, Lock, Loader2 } from "lucide-react";
+import { Radar, Mail, Lock, ExternalLink, Loader2 } from "lucide-react";
 import { createBrowserSupabaseClient } from "@/lib/supabase";
 
 function LoginForm() {
@@ -93,12 +93,24 @@ function LoginForm() {
         {loading ? "Signing in..." : "Sign In"}
       </button>
 
-      <p className="mt-4 text-center text-sm text-white/40">
-        Don&apos;t have an account?{" "}
-        <Link href="/signup" className="font-medium text-cyan-400 hover:text-cyan-300">
-          Start free trial
-        </Link>
-      </p>
+       <button
+         type="button"
+         onClick={() => {
+           window.location.href = `${window.location.origin}/api/auth/signin?provider=google&next=/dashboard`;
+         }}
+         disabled={loading}
+         className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-white/10 py-2.5 text-sm font-semibold text-white/90 backdrop-blur-lg hover:bg-white/20 transition-all"
+       >
+         <ExternalLink size={16} className="text-red-500" />
+         Sign in with Google
+       </button>
+
+       <p className="mt-4 text-center text-sm text-white/40">
+         Don&apos;t have an account?{" "}
+         <Link href="/signup" className="font-medium text-cyan-400 hover:text-cyan-300">
+           Start free trial
+         </Link>
+       </p>
     </form>
   );
 }
